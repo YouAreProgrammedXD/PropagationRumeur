@@ -1,1 +1,33 @@
+# Environnements virtuels
 venv/
+.venv/
+
+# Fichiers Python compilés
+__pycache__/
+*.py[cod]
+
+# Dossiers spécifiques Python
+*.egg-info/
+.eggs/
+
+# Distribution / Packaging
+dist/
+build/
+*.egg
+
+# Fichiers de logs
+*.log
+
+# Fichiers de cache
+*.cache
+*.pytest_cache/
+
+# Fichiers spécifiques à VS Code
+.vscode/
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Fichiers de configuration locale
+.env

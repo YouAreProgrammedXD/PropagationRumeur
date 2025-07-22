@@ -89,3 +89,7 @@ def complet(liste,k,taille):
     else:
         return(True)
 
+
+
+
+main(1000,0.3)
