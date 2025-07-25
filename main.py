@@ -4,21 +4,49 @@ import matplotlib.pyplot as plt
 import math
 
 def main():
-    n,p,mode=demander_parametres()
-    infecte = propagationrumeurs(n,p) #infecté par tour/incrément
-    moy=moyenne(infecte)
-    print("\n")
-    total=0
-    for i in range(len(infecte)):
-        print("Pour ",i+1,"abonnée(s) le nombre d'infecte moyen est:",moy[i])
-        total=total+math.comb(n-1,i+1)*moy[i]*len(infecte[i])
-    total=total/(math.pow(math.pow(2,n-1)-1,n))
-    print("\n",total)
-    
-    #plt.plot(nbinfecte)
-    #plt.xlabel("tour/incrément")
-    #plt.ylabel("nombre de personnes ayant entendu la rumeur")
-    #plt.show()
+    n,p,mode,mode2=demander_parametres()
+    infecte_pol = propagationrumeurs(n,mode2)
+    print(infecte_pol)
+    moy=moyenne(infecte_pol)
+    if (mode==2):
+        print("\n")
+        total=0
+        for i in range(len(infecte_pol)):
+            print("Pour ",i+1,"abonnée(s) initial le nombre d'infecte moyen est:",moy[i](p))
+            total=total+math.comb(n-1,i+1)*moy[i]*len(infecte_pol[i])
+        total=total/(math.pow(math.pow(2,n-1)-1,n))
+        print("\n",total(p))
+    else:
+        if (mode2==0):
+            total=0
+            for i in range(len(infecte_pol)):
+                total=total+math.comb(n-1,i+1)*moy[i]*len(infecte_pol[i])
+            total=total/(math.pow(math.pow(2,n-1)-1,n))
+            print("\nEn moyenne, pour un réseau de taille ",n," le nombre d'infecte suit une fonction de p qui est: ",total,"\n")
+            p_values = np.linspace(0, 1, 100)
+            y_values = total(p_values)
+
+            plt.plot(p_values, y_values)
+            plt.axhline(y=n, color='red', linestyle='--', label=f"y = {n}")
+            plt.xlabel("probabilité p")
+            plt.ylabel("nombre de personnes ayant entendu la rumeur")
+            plt.title("Propagation de la rumeur en fonction de p")
+            plt.grid(True)
+            plt.show()
+        else:
+            print("\nEn moyenne pour un réseau de taille ",n," et avec ",mode2,"abonné initiaux, le nombre d'infecté suit une fonction de p qui est: ",moy[mode2-1],"\n")
+            p_values = np.linspace(0, 1, 100)
+            y_values = moy[mode2-1](p_values)
+
+            plt.plot(p_values, y_values)
+            plt.axhline(y=n, color='red', linestyle='--', label=f"y = {n}")
+            plt.xlabel("probabilité p")
+            plt.ylabel("nombre de personnes ayant entendu la rumeur")
+            plt.title(f"Propagation de la rumeur en fonction de p avec {mode2} infecte initial")
+            plt.grid(True)
+            plt.show()
+            
+        
 
 
 def demander_parametres():
@@ -28,68 +56,83 @@ def demander_parametres():
             if n <= 0:
                 print("Erreur : n doit être > 0.\n\n")
                 continue
-            mode = int(input("Mode 1/2 (1:courbe selon p, 2:p donné)"))
+            mode = int(input("Mode 1/2 (1:courbe selon p, 2:p donné) : "))
             if not (mode==1 or mode==2):
                 print("Erreur : mode doit être 1 ou 2.\n\n")
                 continue
-            if mode==1:
+            if mode==2:
+                mode2=0
                 p = float(input("Probabilité de propagation (entre 0 et 1) : "))
                 if not (0 <= p <= 1):
                     print("Erreur : p doit être entre 0 et 1.\n\n")
                     continue
             else:
                 p=0
-            return n, p, mode
+                limite=n-1
+                mode2 = int(input(f"Nombre d'infecté au depart (0: tout les cas; pas au dessus de {limite}) : "))
+                if (mode2<0 or mode2>n-1):
+                    print("Erreur : le nombre d'infecte initial est un entier entre 0 et",n-1,"\n\n")
+                    continue
+            return n, p, mode, mode2
         except ValueError:
             print("Entrée invalide. Veuillez entrer un entier pour n et un float pour p.")
 
 
 
-def propagation(reseau, p, infectes=None, en_cours=None):
+def propagation(reseau, infectes=None, en_cours=None):
     if infectes is None:
         infectes = set([0])      # Individu 0 lance la rumeur
     if en_cours is None:
         en_cours = [0]           # Ceux qui doivent encore décider
 
     if not en_cours:
-        return len(infectes)     # Cas terminal : plus personne ne peut propager
+        return np.poly1d([len(infectes)])     # Cas terminal : plus personne ne peut propager
 
     courant = en_cours.pop()
+    
     abonnés = [reseau[courant][i] for i in range(len(reseau[courant])) if reseau[courant][i] not in infectes]
 
     if not abonnés:
-        return propagation(reseau, p, infectes, en_cours[:])
+        return propagation(reseau, infectes, en_cours[:])
 
     if (courant!=0):
         # Cas 1 : courant propage
         nouveaux1 = infectes.union(abonnés)
         en_cours1 = en_cours + abonnés
-        e1 = propagation(reseau, p, nouveaux1, en_cours1)
+        e1 = propagation(reseau, nouveaux1, en_cours1)
 
         # Cas 2 : courant ne propage pas
-        e2 = propagation(reseau, p, infectes, en_cours[:])
+        e2 = propagation(reseau, infectes, en_cours[:])
+        p1=np.poly1d([1,0])
+        p2=np.poly1d([-1,1])
+        return p1 * e1 + p2 * e2
     else:
-        e2=0
         nouveaux1 = infectes.union(abonnés)
         en_cours1 = en_cours + abonnés
-        e1 = propagation(reseau, p, nouveaux1, en_cours1)*1/p
-    return p * e1 + (1 - p) * e2
+        e1 = propagation(reseau, nouveaux1, en_cours1)
+        return e1 
 
 
 
 
-#une personne a au moins une autre qui la suis
-def propagationrumeurs(n,p):
+#une personne a au moins une autre qui la suis; 
+# mode:0 l'individus 0 peut avoir toute les combinaison possible d'abonné; sinon il a exactement m abonné
+# (si m=1, que l'abonné soit l'individus 1 ou 2 ou 3 etc ne change rien donc on teste juste pour 1)
+def propagationrumeurs(n,m):
     reseau = np.empty(n, dtype=object)
     reseau[0]=[1]
     for i in range(1,n):
         reseau[i]=[0]
-    infecte=[[] for i in range(n-1)]
+    if (m==0):
+        reseau[0]=creer(m,0)
+        infecte=[[] for i in range(n-1)]
+    else:
+        infecte=[[]]
     k=n-1
     retour=False
     classe=1
     while (k!=-1):
-        infecte[classe-1].append(propagation(reseau,p))
+        infecte[classe-1].append(propagation(reseau))
         while (complet(reseau[k],n-1)):
             if (k==0):
                 reseau[k]=[1]
@@ -98,13 +141,15 @@ def propagationrumeurs(n,p):
             k=k-1
             retour=True
         if (k!=-1): 
-            if (besoinajout(reseau[k],k,n) or k==0):
+            if (k==0 and m!=0):
+                k=-1
+            elif (k==0 or besoinajout(reseau[k],k,n)):
                 reseau[k]=creer(len(reseau[k])+1,k)
                 if k==0:
                     classe=classe+1
             else:
                 reseau[k]=increment(reseau[k],k,n)
-            if (k<n-1):
+            if (k<n-1 and k!=-1):
                 k=k+1
         if retour:
             retour=False
