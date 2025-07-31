@@ -7,15 +7,17 @@ def main():
     n,p,mode,mode2=demander_parametres()
     infecte_pol = propagationrumeurs(n,mode2)
     print(infecte_pol)
-    moy=moyenne(infecte_pol)
+    moy=moyenne(infecte_pol,n)
     if (mode==2):
         print("\n")
         total=0
         for i in range(len(infecte_pol)):
-            print("Pour ",i+1,"abonnée(s) initial le nombre d'infecte moyen est:",moy[i](p))
-            total=total+math.comb(n-1,i+1)*moy[i]*len(infecte_pol[i])
+            print("Pour ",i+1,"abonnée(s) initial le nombre d'infecte moyen est:")
+            print(afficher_polynome(moy[i]))
+            total=total+math.comb(n-1,i+1)*moy[i]*(math.pow(math.pow(2,n-1)-1,n-1))
         total=total/(math.pow(math.pow(2,n-1)-1,n))
-        print("\n",total(p))
+        print("\n En moyenne pour un réseau de taille ",n,", "," personnes sont infecté")
+        print(afficher_polynome(total))
     else:
         if (mode2==0):
             total=0
@@ -47,13 +49,29 @@ def main():
             plt.show()
             
         
-
+def afficher_polynome(p):
+    coeffs = p.coefficients  # ou p.c
+    n = len(coeffs)
+    termes = []
+    for i, coef in enumerate(coeffs):
+        degre = n - i - 1
+        if coef == 0:
+            continue
+        # Gestion du signe pour ne pas afficher "+ -" plus tard
+        if degre == 0:
+            termes.append(f"{coef}")
+        elif degre == 1:
+            termes.append(f"{coef}x")
+        else:
+            termes.append(f"{coef}x^{degre}")
+    return " + ".join(termes)
 
 def demander_parametres():
+    print("\n")
     while True:
         try:
-            n = int(input("Nombre d'individus (entier > 0,recommendé <=5) : "))
-            if n <= 0:
+            n = int(input("Nombre d'individus (entier > 1,recommendé <=5) : "))
+            if n <= 1:
                 print("Erreur : n doit être > 0.\n\n")
                 continue
             mode = int(input("Mode 1/2 (1:courbe selon p, 2:p donné) : "))
@@ -116,58 +134,87 @@ def propagation(reseau, infectes=None, en_cours=None):
 
 
 #une personne a au moins une autre qui la suis; 
-# mode:0 l'individus 0 peut avoir toute les combinaison possible d'abonné; sinon il a exactement m abonné
+# m (mode):0 -> l'individus 0 peut avoir toute les combinaison possible d'abonné; sinon il a exactement m abonné
 # (si m=1, que l'abonné soit l'individus 1 ou 2 ou 3 etc ne change rien donc on teste juste pour 1)
 def propagationrumeurs(n,m):
     reseau = np.empty(n, dtype=object)
     reseau[0]=[1]
+    classe=1
     for i in range(1,n):
-        reseau[i]=[0]
+        if (i!=classe):
+            reseau[i]=[classe]
+        else:
+            reseau[i]=[classe-1]
     if (m==0):
-        reseau[0]=creer(m,0)
         infecte=[[] for i in range(n-1)]
     else:
+        reseau[0]=creer(m,0)
         infecte=[[]]
     k=n-1
     retour=False
-    classe=1
     while (k!=-1):
-        infecte[classe-1].append(propagation(reseau))
-        while (complet(reseau[k],n-1)):
+        infecte[classe-1].append(propagation(reseau)*poid(reseau,classe,n))
+        while (k>=0 and complet(reseau[k],n,classe,k)):
             if (k==0):
                 reseau[k]=[1]
             else:
-                reseau[k]=[0]
+                if (k!=classe):
+                    reseau[k]=[classe]
+                else:
+                    reseau[k]=[classe-1]
             k=k-1
             retour=True
-        if (k!=-1): 
-            if (k==0 and m!=0):
+        if (k==0 and m!=0):
                 k=-1
-            elif (k==0 or besoinajout(reseau[k],k,n)):
-                reseau[k]=creer(len(reseau[k])+1,k)
+        if (k>=0): 
+            if (k==0 or besoinajout(reseau[k],k,n)):
+                reseau[k]=creer(len(reseau[k])+1,k,classe)
                 if k==0:
                     classe=classe+1
+                    for i in range(1,n):
+                        if i!=classe:
+                            reseau[i]=[classe]
+                        else:
+                            reseau[i]=[classe-1]
             else:
                 reseau[k]=increment(reseau[k],k,n)
             if (k<n-1 and k!=-1):
                 k=k+1
         if retour:
             retour=False
-            if (k!=-1):
+            if (k>=0):
                 k=n-1    
+        
     return(infecte)
 
-def moyenne(liste):
+def moyenne(liste,n):
     retour=[]
     for i in range(len(liste)):
         L=len(liste[i])
         t=0
         for r in range(L):
             t=t+liste[i][r]
-        t=t/L 
+        t=t/(math.pow(math.pow(2,n-1)-1,n-1))
         retour.append(t)
     return(retour)
 
+
+
+
+def poid(reseau,classe,n):
+    p=1
+    for i in range(1,n):
+        if (reseau[i][0]==classe or (i==classe and reseau[i][0]==classe-1)):
+            if i>classe:
+                p=p*(math.pow(2,classe+1)-1)
+            else:
+                p=p*(math.pow(2,classe)-1)
+        else:
+            if i>classe:
+                p=p*(1+(math.pow(2,classe+1))-1)
+            else:
+                p=p*(1+(math.pow(2,classe))-1)
+    return(p)
 
 #si on ne peut rien incrémenter <=> les abonnées sont bloquer sur la fin de la bande disponible [0;n-1]/k
 def besoinajout(liste,k,n):
@@ -177,11 +224,13 @@ def besoinajout(liste,k,n):
         return(False)
 
 #créer une nouvelle liste d'abonnée de len=taille+1
-def creer(taille,k):
-    if (k>=taille):
-        return([i for i in range(0,taille)])
+def creer(taille,k,classe):
+    if k==0:
+        return([i for i in range(1,taille+1)])
+    elif (k>=classe+taille+1 or k<classe+1):
+        return([i for i in range(classe+1,classe+taille+1)])
     else:
-        liste=[i for i in range(0,taille+1)]
+        liste=[i for i in range(classe+1,classe+taille+2)]
         liste.remove(k)
         return(liste)
 
@@ -198,11 +247,16 @@ def increment(liste,k,n):
 
 
 #si la liste d'abonné comprend tout les individus possible
-def complet(liste,taille):
-    if (len(liste)!=taille):
+def complet(liste,n,classe,k):
+    l=0
+    if (k>classe):
+        l=1
+    if liste[0]<=classe and n-1-classe-l>0:
         return(False)
-    else:
+    if (len(liste)>=n-1-classe-l):
         return(True)
+    else:
+        return(False)
 
 
 
