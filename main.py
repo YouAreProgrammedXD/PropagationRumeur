@@ -22,7 +22,8 @@ def main():
         if (mode2==0):
             total=0
             for i in range(len(infecte_pol)):
-                total=total+math.comb(n-1,i+1)*moy[i]*len(infecte_pol[i])
+                total=total+math.comb(n-1,i+1)*moy[i]*(math.pow(math.pow(2,n-1)-1,n-1))
+                #total=total+math.comb(n-1,i+1)*moy[i]*len(infecte_pol[i])
             total=total/(math.pow(math.pow(2,n-1)-1,n))
             print("\nEn moyenne, pour un réseau de taille ",n," le nombre d'infecte suit une fonction de p qui est: ",total,"\n")
             p_values = np.linspace(0, 1, 100)
