@@ -1,0 +1,42 @@
+
+import gdown
+from pathlib import Path
+import zipfile
+
+# Dossier où on va sauvegarder le fichier
+DATA_DIR = Path("datasets")
+DATA_DIR.mkdir(exist_ok=True)
+
+# Lien de partage Google Drive (format "uc?id=")
+# Ex : https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+FILE_ID = "1JOvv9JT-4VAhTvl3foEjauhD-XBr5FyP"
+DEST_PATH = DATA_DIR / "twitter_data.csv"
+
+
+
+# URL pour téléchargement direct
+DOWNLOAD_URL = f"https://drive.google.com/uc?export=download&id={FILE_ID}"
+# DOWNLOAD_URL = "https://drive.google.com/file/d/1JOvv9JT-4VAhTvl3foEjauhD-XBr5FyP/view?usp=drive_link"
+
+def download_file(url, dest):
+    print(f"Téléchargement en cours : {dest.name} ...")
+    
+    gdown.download(url, str(dest), quiet=False)
+    print(f"✅ Fichier téléchargé : {dest}")
+
+if __name__ == "__main__":
+    if DEST_PATH.exists():
+        print(f"⚠️ {DEST_PATH} existe déjà, téléchargement annulé.")
+    else:
+        download_file(DOWNLOAD_URL, DEST_PATH)
+
+
+
+
+#response = requests.get(url, stream=True)
+#    response.raise_for_status()
+#    
+#    with open(dest, "wb") as f:
+#        for chunk in response.iter_content(chunk_size=8192):
+#            if chunk:
+#                f.write(chunk)

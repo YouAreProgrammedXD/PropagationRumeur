@@ -18,6 +18,7 @@ build/
 # Fichiers de logs
 *.log
 
+
 # Fichiers de cache
 *.cache
 *.pytest_cache/
@@ -31,3 +32,6 @@ Thumbs.db
 
 # Fichiers de configuration locale
 .env
+
+# data set
+datasets/twitter_data.csv

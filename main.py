@@ -71,7 +71,7 @@ def demander_parametres():
     print("\n")
     while True:
         try:
-            n = int(input("Nombre d'individus (entier > 1,recommendé <=5) : "))
+            n = int(input("Nombre d'individus (entier > 1,recommendé <=6) : "))
             if n <= 1:
                 print("Erreur : n doit être > 0.\n\n")
                 continue

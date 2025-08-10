@@ -1,0 +1,33 @@
+---
+title: "markov"
+output: pdf_document
+date: "2025-08-08"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+py_run_file("scripts/download_data.py")
+```
+
+```{r}
+
+p<-function(N,I){
+  return(0.3)
+}
+
+abonne<-function(N){
+  
+}
+
+aboonement<-function(N){
+  
+}
+
+
+markov <- function(N, I, courant) {
+  
+}
+```
