@@ -13,8 +13,251 @@ py_run_file("scripts/download_data.py")
 ```
 
 ```{r}
+library(stringr)
+library(jsonlite)
+library(dplyr)
+```
 
-p<-function(N,I){
+```{r}
+
+
+# 1. Lire le fichier brut
+lines <- readLines("datasets/twitter_data.csv")
+
+# 2. Fonction pour parser une ligne
+parse_line <- function(line) {
+  # Cherche : valeurs entre guillemets, blocs entre crochets, ou champs simples
+  matches <- str_match_all(line, '"[^"]*"|\\[.*?\\]|[^,]+')[[1]][, 1]
+  
+  # Retirer les guillemets autour des champs texte
+  matches <- gsub('^"(.*)"$', "\\1", matches)
+  
+  return(matches)
+}
+
+# 3. Appliquer à toutes les lignes
+parsed_list <- lapply(lines, parse_line)
+
+# 4. Vérifier que toutes les lignes ont le même nombre de colonnes
+col_counts <- sapply(parsed_list, length)
+if (length(unique(col_counts)) != 1) {
+  stop("Certaines lignes n'ont pas le même nombre de colonnes !")
+}
+
+# 5. Construire le data frame
+twitter_data <- as.data.frame(do.call(rbind, parsed_list), stringsAsFactors = FALSE)
+
+# 6. Renommer les colonnes (à adapter à ton CSV exact)
+colnames(twitter_data) <- c(
+  "id", "screenName", "tags", "avatar", "followersCount",
+  "friendsCount", "lang", "lastSeen", "tweetId", "friends"
+)
+
+# 7. Forcer les colonnes JSON à être character
+twitter_data$tags <- as.character(twitter_data$tags)
+twitter_data$friends <- as.character(twitter_data$friends)
+
+# 8. Parsing JSON sécurisé
+safe_fromJSON <- function(x) {
+  if (is.na(x) || x == "" || !grepl("^\\[", x)) return(NA)
+  tryCatch(fromJSON(x), error = function(e) NA)
+}
+
+twitter_data$tags <- lapply(twitter_data$tags, safe_fromJSON)
+twitter_data$friends <- lapply(twitter_data$friends, safe_fromJSON)
+
+twitter_data <- twitter_data[-1, ]
+
+data <- twitter_data%>% 
+  mutate(followersCount=as.integer(followersCount),friendsCount=as.integer(friendsCount))
+
+twitter_data<-data%>%select(id,followersCount,friendsCount)
+
+```
+
+```{r}
+head(twitter_data,2)
+```
+
+```{r}
+moy1 <- mean(twitter_data$followersCount)
+moy2 <- mean(twitter_data$friendsCount)
+var1 <- var_followers <- var(twitter_data$followersCount)
+var2 <- var_followers <- var(twitter_data$friendsCount)
+
+
+cat("Moyenne follower:",moy1,"\n")
+cat("Moyenne friends:",moy2,"\n")
+cat("Variance follower:",var1,"\n")
+cat("Moyenne friends:",var2,"\n")
+```
+
+```{r}
+test <- log10(twitter_data$followersCount + 1)  # +1 pour éviter log(0)
+
+m<-mean(test)
+m
+v<-var(test)
+v
+
+sigm2 <- log(1+v/m^2)
+mu <- log(m)-sigm2/2
+
+
+
+f <- function(x) {
+  (1/(x*sqrt(sigm2*2*pi)))*exp(-((log(x)-mu)^2)/(2*sigm2))
+}
+
+
+
+f3 <- function(x){
+  (1/sqrt(v*2*pi))*exp((-(x-m)^2)/(2*v))
+}
+
+
+
+hist(test,
+     breaks = 50,
+     freq = FALSE,
+     main = "Distribution log-transformée du nombre de followers",
+     xlab = "log10(nombre de followers + 1)",
+     col = "skyblue")
+curve(f, from = 2, to = 7, col = "red", lwd = 2, add = TRUE)
+curve(f3, from = 2, to = 7, col = "green", lwd = 2, add = TRUE)
+
+
+
+```
+
+```{r}
+qqnorm(test, main = "Q-Q plot de log10(followers)")
+qqline(test, col = "red", lwd = 2)
+
+qqnorm(log10(test), main = "Q-Q plot de log10(log10(followers))")
+qqline(log10(test), col = "red", lwd = 2)
+
+qqnorm(log10(log10(test)), main = "Q-Q plot de log10(log10(log10(followers)))")
+qqline(log10(log10(test)), col = "red", lwd = 2)
+
+qqnorm(log10(log10(log10(test))+1), main = "Q-Q plot de log10(log10(log10(log10(followers)))+1)")
+qqline(log10(log10(log10(test))+1), col = "red", lwd = 2)
+```
+
+```{r}
+p1 <- moy1/var1
+n1 <- (p1/(1-p1))*moy1
+
+
+
+f2 <- function(k){
+  log10(choose(k+n1-1,k)*(p1^n1)*((1-p1)^k))
+}
+
+
+
+val <- f2(0:max(twitter_data$followersCount))
+
+
+hist(val,
+     breaks = 50,
+     freq = FALSE,
+     main = "Distribution log-transformée du nombre de followers",
+     xlab = "log10(nombre de followers + 1)",
+     col = "skyblue")
+
+
+```
+
+```{r}
+library(poweRlaw)
+
+# Exemple : remplacer par ton vrai vecteur de followers
+followers <- twitter_data$followers + 1  # +1 pour éviter zéro
+
+# On choisit un modèle de loi de puissance discrète
+m <- displ$new(followers)
+
+# Estimation de xmin
+est_x <- estimate_xmin(m, xmax = 5000)
+est_x
+m$setXmin(est_x)
+
+# Estimation des paramètres
+est_p <- estimate_pars(m)
+m$setPars(est_p)
+
+# Affichage
+plot(m)
+lines(m, col = "red")
+```
+
+```{r}
+# Nettoyage des données
+followers <- twitter_data$followers + 1
+
+
+
+m <- displ$new(followers)
+
+# Essayer une estimation avec xmax modéré
+est_x <- tryCatch(estimate_xmin(m, xmax=5000), error = function(e) NULL)
+
+if (is.null(est_x)) {
+  cat("Estimation automatique de xmin échouée, on fixe xmin manuellement\n")
+  m$setXmin(100)  # exemple de seuil choisi
+} else {
+  m$setXmin(est_x)
+}
+
+# Vérifier qu'il reste assez de données
+cat("Nombre de données au-dessus de xmin :", sum(followers >= m$getXmin()), "\n")
+
+# Estimer les paramètres
+est_p <- tryCatch(estimate_pars(m), error = function(e) NULL)
+if (is.null(est_p)) {
+  cat("Estimation des paramètres échouée\n")
+} else {
+  m$setPars(est_p)
+  plot(m)
+  lines(m, col = "red")
+}
+
+```
+
+```{r}
+set.seed(123)
+n <- nrow(data)
+train_indices <- sample(1:n, size = 0.75 * n)
+
+# Séparation des données
+train_data <- data[train_indices, ]
+test_data  <- data[-train_indices, ]
+
+# Vérification
+nrow(train_data)  
+nrow(test_data)
+```
+
+```{r}
+head(data,2)
+```
+
+```{r}
+r<-lm(followersCount~friendsCount,train_data)
+summary(r)
+```
+
+```{r}
+plot(r)
+```
+
+```{r}
+#N->nb de personne dans le reseaux
+#I->nb d'infecte
+#Fo->nb de follower
+#CI->taille de la communauté dont fait partie le propagateur initial
+p<-function(N,I,Fo,CI){
   return(0.3)
 }
 
@@ -22,12 +265,30 @@ abonne<-function(N){
   
 }
 
-aboonement<-function(N){
+Fol<-function(N){
+  return(0)
+}
+
+abonement<-function(N){
   
 }
 
-
-markov <- function(N, I, courant) {
-  
+#N->nb de personne dans le reseaux
+#I->nb d'infecte
+#CI->taille de la communauté dont fait partie le propagateur initial
+#courant->nombre de personne qui viennent d'entendre la rumeur
+#tour->nombre d'iteration de la fonction Markov
+markov <- function(N, I, CI,courant, tour) {
+  infection<-runif(courant,0,1)
+  prochain<-0
+  nouveaux_infecte<-0
+  for (i in 1:courant){
+    Fo<-fol(N)
+    if (infection[i]>=p(N,Fo,CI)){
+      nouveaux_infecte<-nouveaux_infecte+1
+      prochain<-prochain+Fo
+    }
+  }
+  markov(N,I+nouveaux_infecte,CI,prochain,tour+1)
 }
 ```

@@ -1,0 +1,74 @@
+import random as rd
+import numpy as np
+import math
+import matplotlib.pyplot as plt
+
+
+N=1000
+nb_tour=1000000
+loi_nb_abonne="power" #power, uniforme
+abonne_initial=3
+
+#parametre power law
+kmin=1
+kmax=math.floor(0.8*N)
+alph=2.5
+
+def proba_propagation(I):
+    return(1/3)
+
+k = np.arange(kmin, kmax)
+weights = k**(-alph)
+probs = weights / weights.sum()
+cdf = np.cumsum(probs)
+
+
+def nb_abonne(I):
+    if (loi_nb_abonne=="power"):
+        
+
+        u = rd.random()
+        return (min(math.ceil((N-I)/N)*k[np.searchsorted(cdf, u)],N-I))
+    elif(loi_nb_abonne=="unif"):
+        return(min(math.ceil(((N-I)/N)*rd.randint(0,N)),N-I))
+
+
+def propagation(I,NI):
+    if (NI==0 or I==N):
+        return(I)
+    else:
+        new_abonne=0
+        for i in range(NI):
+            u=rd.random()
+            if (u<=proba_propagation(I)):
+                new_abonne=new_abonne+nb_abonne(I+NI+new_abonne)
+        return(propagation(I+NI,new_abonne))
+
+
+def propagation_iter(I, NI):
+    total = I
+    queue = [NI]
+    while queue:
+        current = queue.pop(0)
+        new_abonne = 0
+        for _ in range(current):
+            if rd.random() <= proba_propagation(total):
+                new_abonne += nb_abonne(total + new_abonne)
+        total += current
+        if new_abonne > 0:
+            queue.append(new_abonne)
+        print(new_abonne)
+    return total
+
+
+M=np.zeros(nb_tour)
+for i in range(nb_tour):
+    M[i]=propagation(1,abonne_initial)
+
+print(M)
+
+plt.hist(M, bins=50, density=True)
+plt.xlabel("Nombre total d'individus atteints")
+plt.ylabel("Fréquence (proportion)")
+plt.yscale("log")   # optionnel pour queue longue
+plt.show()
