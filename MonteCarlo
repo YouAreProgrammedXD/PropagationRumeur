@@ -25,12 +25,10 @@ cdf = np.cumsum(probs)
 
 def nb_abonne(I):
     if (loi_nb_abonne=="power"):
-        
-
         u = rd.random()
-        return (min(math.ceil((N-I)/N)*k[np.searchsorted(cdf, u)],N-I))
+        return(min(np.random.binomial(k[np.searchsorted(cdf, u)],(N-I)/N),N-I))
     elif(loi_nb_abonne=="unif"):
-        return(min(math.ceil(((N-I)/N)*rd.randint(0,N)),N-I))
+        return(min(np.random.binomial(rd.randint(0,N),((N-I)/N)),N-I))
 
 
 def propagation(I,NI):
