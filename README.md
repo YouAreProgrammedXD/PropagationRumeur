@@ -18,8 +18,8 @@ Analyse statistique : R (.Rmd)
 
 Simulation : Monte Carlo
 
-📂 Structure du projet
-.
+📂 Structure du projet  
+.  
 ├── main.py  
 ├── MonteCarlo.py  
 ├── loi abonnee.Rmd  
@@ -32,7 +32,7 @@ On adopte une approche exhaustive :
 Générer tous les réseaux possibles respectant certaines contraintes,
 puis calculer en moyenne combien d’individus entendent la rumeur.
 
-On fait des hypothèses du modèle
+On fait des hypothèses sur le modèle
 
 Chaque individu possède au moins 1 abonné. Un individu qui entend la rumeur la transmet à tous ses abonnés avec une probabilité p. L’individu initial (individu 0) transmet avec une probabilité 1
 
@@ -54,9 +54,7 @@ Des optimisations sont introduites :
 
 - Exploitation du fait que les abonnés de l’individu 0 sont automatiquement infectés
 
-La complexité reste néanmoins explosive.
-
-Estimation large :
+La complexité reste néanmoins explosive avec une estimation large :
 
 $O(n \cdot 2^{n^2})$.
 
