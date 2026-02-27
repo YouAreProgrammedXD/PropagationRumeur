@@ -20,25 +20,21 @@ Simulation : Monte Carlo
 
 📂 Structure du projet
 .
-├── main.py
-├── MonteCarlo.py
-├── loi abonnee.Rmd
-└── README.md
-🧮 1️⃣ Approche déterministe — main.py
-🎯 Principe
+├── main.py  
+├── MonteCarlo.py  
+├── loi abonnee.Rmd  
+└── README.md  
+
+🧮 1️⃣ Approche déterministe — main.py  
 
 On adopte une approche exhaustive :
 
 Générer tous les réseaux possibles respectant certaines contraintes,
 puis calculer en moyenne combien d’individus entendent la rumeur.
 
-📌 Hypothèses du modèle
+On fait des hypothèses du modèle
 
-Chaque individu possède au moins 1 abonné
-
-Un individu qui entend la rumeur la transmet à tous ses abonnés avec une probabilité p
-
-L’individu initial (individu 0) transmet avec une probabilité 1
+Chaque individu possède au moins 1 abonné. Un individu qui entend la rumeur la transmet à tous ses abonnés avec une probabilité p. L’individu initial (individu 0) transmet avec une probabilité 1
 
 Chaque individu décide une seule fois de transmettre ou non
 
@@ -46,11 +42,9 @@ Chaque individu décide une seule fois de transmettre ou non
 
 Le nombre total de réseaux possibles est extrêmement élevé :
 
-(2n−1−1)n
-(2
-n−1
-−1)
-n
+$$
+(2^{n-1} - 1)^n
+$$
 
 Des optimisations sont introduites :
 
@@ -64,27 +58,23 @@ La complexité reste néanmoins explosive.
 
 Estimation large :
 
-O(n⋅2n2)
-O(n⋅2
-n
-2
-)
+$O(n \cdot 2^{n^2})$.
 
 👉 En pratique, le programme devient rapidement inutilisable pour des valeurs modérées de n.
 
 ✅ Avantage
 
-Permet de visualiser précisément l’effet de p sur la propagation
+- Permet de visualiser précisément l’effet de p sur la propagation
 
-Donne une référence théorique exhaustive
+- Donne une référence théorique exhaustive
 
 ❌ Inconvénients
 
-Complexité computationnelle prohibitive
+- Complexité computationnelle prohibitive
 
-Hypothèse irréaliste : tous les réseaux ont la même probabilité d’exister
+- Hypothèse irréaliste : tous les réseaux ont la même probabilité d’exister
 
-Ne tient pas compte des lois empiriques de distribution des abonnés
+- Ne tient pas compte des lois empiriques de distribution des abonnés
 
 📊 2️⃣ Étude statistique — loi abonnee.Rmd
 
@@ -94,80 +84,21 @@ Objectif :
 
 Cette analyse permet de :
 
-Identifier une distribution réaliste (ex : loi de puissance)
+- Identifier une distribution réaliste (ex : loi de puissance)
 
-Améliorer le réalisme du modèle
+- Améliorer le réalisme du modèle
 
-Comparer modèle théorique et données empiriques
+- Comparer modèle théorique et données empiriques
 
 🎲 3️⃣ Approche Monte Carlo — MonteCarlo.py
 
 Face à l’explosion combinatoire de l’approche déterministe, on adopte une méthode probabiliste :
 
-Principe
-
-Générer aléatoirement des réseaux
-
-Simuler la propagation
-
-Répéter l’expérience un grand nombre de fois
-
-Estimer l’espérance du nombre d’individus atteints
+On Génère aléatoirement des réseaux et on simule la propagation puis on Répète l’expérience un grand nombre de fois et on Estime l’espérance du nombre d’individus atteints
 
 Avantages
 
-Complexité drastiquement réduite
+- Complexité drastiquement réduite
 
-Permet de traiter des réseaux de grande taille
+- Permet de traiter des réseaux de grande taille
 
-Approche plus réaliste
-
-📈 Objectif scientifique
-
-Comparer :
-
-Approche exhaustive (déterministe)
-
-Approche probabiliste (Monte Carlo)
-
-Distribution réelle des abonnements
-
-Et analyser l’influence de p sur :
-
-Le seuil critique de propagation
-
-La taille moyenne de la cascade
-
-L’émergence éventuelle d’un phénomène type percolation
-
-🚀 Améliorations possibles
-
-Introduire une distribution réaliste des degrés (loi de puissance)
-
-Ajouter des graphes orientés pondérés
-
-Étudier les seuils critiques analytiquement
-
-Paralléliser les simulations Monte Carlo
-
-Ajouter visualisation interactive
-
-📌 Conclusion
-
-Ce projet met en évidence :
-
-Les limites d’une approche exhaustive face à l’explosion combinatoire
-
-L’intérêt des méthodes probabilistes pour l’étude des phénomènes de diffusion
-
-L’importance d’intégrer des distributions réalistes issues de données empiriques
-
-Si tu veux, je peux maintenant te faire :
-
-🔬 Une version plus académique (rapport de recherche)
-
-💼 Une version optimisée pour portfolio/école d’ingénieur
-
-📈 Une version orientée data science / IA
-
-🧠 Une version avec mise en forme mathématique encore plus propre
